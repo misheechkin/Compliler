@@ -2,6 +2,7 @@
 #include <QFileDialog>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "analyzer.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -10,11 +11,36 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->plainTextEdit->setReadOnly(true);
     highlighter = std::make_unique<CppHighlighter>(ui->plainTextEdit->document());
+    connect(ui->plainTextEdit,&QPlainTextEdit::textChanged,this,&MainWindow::documentModified);
+    is_modified = false;
+    ui->tableWidget->setColumnCount(4);
+    ui->tableWidget->setHorizontalHeaderLabels({ "Условный код", "Тип лексемы", "Лексема", "Местоположение" });
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Stretch);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    if (is_modified) {
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(this, "Документ изменен", "Хотите сохранить изменения?",
+                                    QMessageBox::Discard  | QMessageBox::Save  | QMessageBox::Cancel);
+        if (reply == QMessageBox::Save) {
+            on_menuSaveFIleIn_triggered();
+            event->accept();
+        } else if (reply == QMessageBox::Discard) {
+            event->accept();
+        } else {
+            event->ignore();
+        }
+    } else {
+        event->accept();
+    }
 }
 
 
@@ -44,6 +70,7 @@ void MainWindow::on_menuSaveFile_triggered()
 {
     if(file.save(ui->plainTextEdit->toPlainText())) {
         QMessageBox::information(this,"Информация","Сохранение успешно");
+        is_modified = false;
         return;
     }
     QMessageBox::warning(this, "Ошибка", "Не удалось сохранить файл (нужно выполнить сохранить как)");
@@ -55,6 +82,7 @@ void MainWindow::on_menuSaveFIleIn_triggered()
     if(file.saveAs(ui->plainTextEdit->toPlainText(),
                     QFileDialog::getSaveFileName(nullptr, "Сохранить как", "/home", "Все файлы (*);;Текстовые файлы (*.txt)"))) {
         QMessageBox::information(this,"Информация","Сохранение успешно");
+        is_modified = false;
         return;
     }
     QMessageBox::warning(this, "Ошибка", "Не удалось сохранить файл");
@@ -124,5 +152,34 @@ void MainWindow::on_action_21_triggered()
 "Для редактирования текста используйте функции 'Вырезать', 'Копировать', 'Вставить' и 'Удалить'\n\n"
 "Вы можете отменить или повторить действия с помощью 'Отменить' и 'Повторить'\n\n"
 "Для получения справки нажмите 'Справка' в меню\n");
+}
+
+void MainWindow::documentModified()
+{
+    is_modified = true;
+}
+
+
+void MainWindow::on_toolbarStart_triggered()
+{
+    QPlainTextEdit* inputTextEdit =  ui->plainTextEdit;
+    QTableWidget* tableWidget = ui->tableWidget;
+    QString text = inputTextEdit->toPlainText();
+    QVector <Analyzer::Lexeme> lexemes = Analyzer::analyze(text);
+    tableWidget->setRowCount(0);
+    for (int i = 0; i < lexemes.size(); ++i) {
+        auto& token = lexemes[i];
+
+        tableWidget->insertRow(i);
+
+        tableWidget->setItem(i, 0, new QTableWidgetItem(QString::number(token.code)));
+
+        tableWidget->setItem(i, 1, new QTableWidgetItem(token.type));
+
+        tableWidget->setItem(i, 2, new QTableWidgetItem(token.value));
+
+        tableWidget->setItem(i, 3, new QTableWidgetItem("c " + QString::number(token.startPos) + " по " + QString::number(token.endPos)));
+    }
+
 }
 

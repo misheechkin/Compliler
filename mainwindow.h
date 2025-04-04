@@ -20,6 +20,9 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+protected:
+
+    void closeEvent(QCloseEvent *event) override;
 
 private slots:
     void on_menuCreateFile_triggered();
@@ -50,9 +53,14 @@ private slots:
 
     void on_action_21_triggered();
 
+    void documentModified();
+
+    void on_toolbarStart_triggered();
+
 private:
     Ui::MainWindow *ui;
     File file;
+    bool is_modified;
     std::unique_ptr<CppHighlighter> highlighter;
 };
 #endif // MAINWINDOW_H

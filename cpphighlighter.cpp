@@ -21,6 +21,12 @@ CppHighlighter::CppHighlighter(QTextDocument *parent)
                     << "\\bdo\\b" << "\\bswitch\\b" << "\\bcase\\b" << "\\bbreak\\b"
                     << "\\bcontinue\\b" << "\\bgoto\\b" << "\\btrue\\b" << "\\bfalse\\b";
 
+    // Добавляем контейнеры STL
+    keywordPatterns << "\\bmap\\b" << "\\bunordered_map\\b" << "\\bvector\\b"
+                    << "\\bset\\b" << "\\bunordered_set\\b" << "\\blist\\b"
+                    << "\\bdeque\\b" << "\\bqueue\\b" << "\\bstack\\b"
+                    << "\\bpriority_queue\\b" << "\\barray\\b" << "\\bstring\\b";
+
     for (const QString &pattern : keywordPatterns) {
         HighlightingRule rule;
         rule.pattern = QRegularExpression(pattern);
