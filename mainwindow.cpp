@@ -13,10 +13,6 @@ MainWindow::MainWindow(QWidget *parent)
     highlighter = std::make_unique<CppHighlighter>(ui->plainTextEdit->document());
     connect(ui->plainTextEdit,&QPlainTextEdit::textChanged,this,&MainWindow::documentModified);
     is_modified = false;
-    ui->tableWidget->setColumnCount(4);
-    ui->tableWidget->setHorizontalHeaderLabels({ "Условный код", "Тип лексемы", "Лексема", "Местоположение" });
-    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Stretch);
 }
 
 MainWindow::~MainWindow()
@@ -162,24 +158,14 @@ void MainWindow::documentModified()
 
 void MainWindow::on_toolbarStart_triggered()
 {
+    ui->textBrowser->clear();
     QPlainTextEdit* inputTextEdit =  ui->plainTextEdit;
-    QTableWidget* tableWidget = ui->tableWidget;
     QString text = inputTextEdit->toPlainText();
     QVector <Analyzer::Lexeme> lexemes = Analyzer::analyze(text);
-    tableWidget->setRowCount(0);
-    for (int i = 0; i < lexemes.size(); ++i) {
-        auto& token = lexemes[i];
-
-        tableWidget->insertRow(i);
-
-        tableWidget->setItem(i, 0, new QTableWidgetItem(QString::number(token.code)));
-
-        tableWidget->setItem(i, 1, new QTableWidgetItem(token.type));
-
-        tableWidget->setItem(i, 2, new QTableWidgetItem(token.value));
-
-        tableWidget->setItem(i, 3, new QTableWidgetItem("c " + QString::number(token.startPos) + " по " + QString::number(token.endPos)));
+    Analyzer* analyzer = new Analyzer();
+    QVector <QString> erros = analyzer->syntax(lexemes);
+    foreach (QString var, erros) {
+            ui->textBrowser->append(var);
     }
-
 }
 

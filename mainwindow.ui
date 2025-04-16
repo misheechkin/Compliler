@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Парсер</string>
+   <string>Курсовая работа</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QPlainTextEdit" name="plainTextEdit">
@@ -26,18 +26,24 @@
     <property name="font">
      <font>
       <family>JetBrains Mono</family>
-      <pointsize>12</pointsize>
+      <pointsize>16</pointsize>
      </font>
     </property>
    </widget>
-   <widget class="QTableWidget" name="tableWidget">
+   <widget class="QTextBrowser" name="textBrowser">
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>440</y>
+      <y>430</y>
       <width>961</width>
-      <height>241</height>
+      <height>251</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>JetBrains Mono</family>
+      <pointsize>14</pointsize>
+     </font>
     </property>
    </widget>
   </widget>

@@ -7,6 +7,19 @@
 #include <QMap>
 #include <QRegularExpression>
 
+enum StateID {
+    START,
+    KEYWORD,
+    OPEN_BRACKET,
+    KEY_TYPE,
+    COMMA,
+    VALUE_TYPE,
+    CLOSE_BRACKET,
+    VAR_NAME,
+    END,
+};
+
+
 class Analyzer
 {
 public:
@@ -19,11 +32,13 @@ public:
         long unsigned endPos;
 
     };
-
+    QVector<QString> syntax(QVector<Lexeme>& lexemes);
     static QVector<Lexeme> analyze(const QString& text);
-    Analyzer() {}
+    Analyzer() : state(START)
+    {}
 
 private:
+    StateID state;
     static bool isletter(unsigned char c);
 };
 
