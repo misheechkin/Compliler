@@ -5,14 +5,38 @@ bool Analyzer::isletter(unsigned char c) {
     return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 }
 
-int Analyzer::netrazilation(QVector<Lexeme> &lexemes,int j, int code, int nextcode, QVector<QString> &errors){
-    while(j < lexemes.size()){
-        if(lexemes[j].code == 6 && code != 6) {
-            errors.push_back("Неверные символы " + lexemes[j].value);
-        } else {
-            return j;
+int Analyzer::netrazilation(QVector<Lexeme> &lexemes, int &j, int code, int nextcode, QVector<QString> &errors) {
+    while(j < lexemes.size()) {
+        if(lexemes[j].code == code) {
+            return 1;
+        } else if(lexemes[j].code == 6 && !nextcode) {
+            switch (code) {
+            case 1:
+                errors.push_back("Ошибка! Отсутствует map");
+                break;
+            case 2:
+                errors.push_back("Ошибка! Отсутствует тип данных ключа");
+                break;
+            case 3:
+                errors.push_back("Ошибка! Отсутствует тип данных значения");
+                break;
+            case 7:
+                errors.push_back("Ошибка! Отсутствует <");
+                break;
+            case 8:
+                errors.push_back("Ошибка! Отсутствует >");
+                break;
+            case 9:
+                errors.push_back("Ошибка! Отсутствует ;");
+                break;
+            case 10:
+                errors.push_back("Ошибка! Отсутствует ,");
+                break;
+            }
+            j++;
+            continue;
         }
-        j++;
+        break;
     }
     return 0;
 }
@@ -29,13 +53,21 @@ QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
         switch(state) {
         case START:
             if(lexemes[j].code != 1) {
-                int size_errors = errors.size();
-                j = netrazilation(lexemes, j, 1, 7, errors);
-                if(lexemes[j].code == 1) {
-                    j++;
+                int end = j;
+                int size = errors.size();
+                int flag = netrazilation(lexemes, j, 1, 0, errors);
+                if(lexemes[j].code != 7 && !flag) {
+                    for(int temp = errors.size();size != temp; temp--){
+                        errors.pop_back();
+                        break;
+                    }
+                    j -= 1;
                 }
-                if(errors.size() == size_errors) {
-                    errors.push_back("Пропущенно map");
+                if(flag) {
+                    j++;
+                } else  {
+                    if(errors.size() == size)
+                    errors.push_back("Ошибка! Отсутствует ключевое слово map");
                 }
             } else {
                 j++;
@@ -44,13 +76,20 @@ QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
             break;
         case KEYWORD:
             if(lexemes[j].code != 7) {
-                int size_errors = errors.size();
-                j = netrazilation(lexemes, j, 7, 3, errors);
-                if(lexemes[j].code == 7) {
-                    j++;
+                int end = j;
+                int size = errors.size();
+                int flag = netrazilation(lexemes, j, 7, 0, errors);
+                if(lexemes[j].code != 2 && !flag) {
+                      for(int temp = errors.size();size != temp; temp--){
+                          errors.pop_back();
+                      }
+                      j = end;
                 }
-                if(errors.size() == size_errors) {
-                    errors.push_back("Пропущенно <");
+                if(flag) {
+                    j++;
+                } else {
+                     if(errors.size() == size)
+                    errors.push_back("Ошибка! Отсутствует <");
                 }
             } else {
                 j++;
@@ -58,15 +97,21 @@ QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
             state = OPEN_BRACKET;
             break;
         case OPEN_BRACKET:
-            if(lexemes[j].code < 2 || lexemes[j].code > 5) {
-                int size_errors = errors.size();
-                j = netrazilation(lexemes, j, 2, 10, errors);
-                if(lexemes[j].code == 2 || lexemes[j].code == 3 || lexemes[j].code == 4
-                    || lexemes[j].code == 5 ) {
-                    j++;
+            if(lexemes[j].code != 2) {
+                int end = j;
+                int size = errors.size();
+                int flag = netrazilation(lexemes, j, 2, 0, errors);
+                if(lexemes[j].code != 10 && !flag) {
+                    for(int temp = errors.size();size != temp; temp--){
+                        errors.pop_back();
+                    }
+                    j = end;
                 }
-                if(errors.size() == size_errors) {
-                    errors.push_back("Пропущен тип данных");
+                if(flag) {
+                    j++;
+                } else {
+                    if(errors.size() == size)
+                        errors.push_back("Ошибка! Отсутствует тип ключа");
                 }
             } else {
                 j++;
@@ -75,13 +120,20 @@ QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
             break;
         case KEY_TYPE:
             if(lexemes[j].code != 10) {
-                int size_errors = errors.size();
-                j = netrazilation(lexemes, j, 10, 2, errors);
-                if(lexemes[j].code == 10) {
-                    j++;
+                int end = j;
+                int size = errors.size();
+                int flag = netrazilation(lexemes, j, 10, 0, errors);
+                if(lexemes[j].code != 3 && !flag) {
+                    for(int temp = errors.size();size != temp; temp--){
+                        errors.pop_back();
+                    }
+                    j = end;
                 }
-                if(errors.size() == size_errors) {
-                    errors.push_back("Пропущена ,");
+                if(flag) {
+                    j++;
+                } else {
+                    if(errors.size() == size)
+                        errors.push_back("Ошибка! Отсутствует запятая");
                 }
             } else {
                 j++;
@@ -89,15 +141,21 @@ QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
             state = COMMA;
             break;
         case COMMA:
-            if(lexemes[j].code < 2 || lexemes[j].code > 5) {
-                int size_errors = errors.size();
-                j = netrazilation(lexemes, j, 2, 8, errors);
-                if(lexemes[j].code == 2 || lexemes[j].code == 3 || lexemes[j].code == 4
-                    || lexemes[j].code == 5 ) {
-                    j++;
+            if(lexemes[j].code != 3) {
+                int end = j;
+                int size = errors.size();
+                int flag = netrazilation(lexemes, j, 3, 0, errors);
+                if(lexemes[j].code != 8 && !flag) {
+                    for(int temp = errors.size();size != temp; temp--){
+                        errors.pop_back();
+                    }
+                    j = end;
                 }
-                if(errors.size() == size_errors) {
-                    errors.push_back("Пропущен тип данных");
+                if(flag) {
+                    j++;
+                } else {
+                    if(errors.size() == size)
+                        errors.push_back("Ошибка! Отсутствует тип значения");
                 }
             } else {
                 j++;
@@ -106,13 +164,20 @@ QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
             break;
         case VALUE_TYPE:
             if(lexemes[j].code != 8) {
-                int size_errors = errors.size();
-                j = netrazilation(lexemes, j, 8, 6, errors);
-                if(lexemes[j].code == 8) {
-                    j++;
+                int end = j;
+                int size = errors.size();
+                int flag = netrazilation(lexemes, j, 8, 1, errors);
+                if(lexemes[j].code != 6 && !flag) {
+                    for(int temp = errors.size();size != temp; temp--){
+                        errors.pop_back();
+                    }
+                    j = end;
                 }
-                if(errors.size() == size_errors) {
-                    errors.push_back("Пропущена >");
+                if(flag) {
+                    j++;
+                } else {
+                    if(errors.size() == size)
+                        errors.push_back("Ошибка! Отсутствует >");
                 }
             } else {
                 j++;
@@ -121,7 +186,21 @@ QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
             break;
         case CLOSE_BRACKET:
             if(lexemes[j].code != 6) {
-
+                int end = j;
+                int size = errors.size();
+                int flag = netrazilation(lexemes, j, 6, 1, errors);
+                if(lexemes[j].code != 9 && !flag) {
+                    for(int temp = errors.size();size != temp; temp--){
+                        errors.pop_back();
+                    }
+                    j = end;
+                }
+                if(flag) {
+                    j++;
+                } else {
+                    if(errors.size() == size)
+                        errors.push_back("Ошибка! Отсутствует индефикатор");
+                }
             } else {
                 j++;
             }
@@ -129,7 +208,7 @@ QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
             break;
         case VAR_NAME:
             if(lexemes[j].code != 9) {
-
+                errors.push_back("Ошибка! Отсутствует ;");
             } else {
                 j++;
             }
@@ -150,6 +229,7 @@ QVector<Analyzer::Lexeme> Analyzer::analyze(const QString& text) {
     uint start = 0, end = 0;
     uint i;
     unsigned char h;
+    int flag = 0;
     for (i = 0; i < text.length(); i++) {
         unsigned char c = static_cast<unsigned char>(text[i].toLatin1());
         end = i + 1;
@@ -163,54 +243,79 @@ QVector<Analyzer::Lexeme> Analyzer::analyze(const QString& text) {
                     if(lex.value == lexeme){
                         lexemes.push_back({6, "идентификатор", lexeme, start, i});
                         lexeme.clear();
-                        continue;
+                        flag = 1;
+                        break;
                     }
+                }
+                if(flag){
+                    flag = 0;
+                    continue;
                 }
                 lexemes.push_back({1, "ключевое слово", lexeme, start, end});
                 lexeme.clear();
             }
             else if("int" == lexeme && (h == '>' || h == ',' || h == ' ')) {
                 foreach (Lexeme lex, lexemes) {
-                    if(lex.value == lexeme){
-                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
+                    if(lex.code == 2 || lex.code == 10) {
+                        lexemes.push_back({3, "идентификатор", lexeme, start, i});
                         lexeme.clear();
-                        continue;
+                        flag = 1;
+                        break;
                     }
+                }
+                if(flag){
+                    flag = 0;
+                    continue;
                 }
                 lexemes.push_back({2, "ключевое слово", lexeme, start, end});
                 lexeme.clear();
             }
             else if("string" == lexeme && (h == '>' || h == ',' || h == ' ')){
                 foreach (Lexeme lex, lexemes) {
-                    if(lex.value == lexeme){
-                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
+                    if(lex.code == 2 || lex.code == 10) {
+                        lexemes.push_back({3, "идентификатор", lexeme, start, i});
                         lexeme.clear();
-                        continue;
+                        flag = 1;
+                        break;
                     }
                 }
-                lexemes.push_back({3, "ключевое слово", lexeme, start, end});
+                if(flag){
+                    flag = 0;
+                    continue;
+                }
+                lexemes.push_back({2, "ключевое слово", lexeme, start, end});
                 lexeme.clear();
             }
             else if("float" == lexeme && (h == '>' || h == ',' ||  h == ' ')){
                 foreach (Lexeme lex, lexemes) {
-                    if(lex.value == lexeme){
-                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
+                    if(lex.code == 2 || lex.code == 10) {
+                        lexemes.push_back({3, "идентификатор", lexeme, start, i});
                         lexeme.clear();
-                        continue;
+                        flag = 1;
+                        break;
                     }
                 }
-                lexemes.push_back({4, "ключевое слово", lexeme, start, end});
+                if(flag){
+                    flag = 0;
+                    continue;
+                }
+                lexemes.push_back({2, "ключевое слово", lexeme, start, end});
                 lexeme.clear();
             }
             else if("double" == lexeme && (h == '>' || h == ',' || h == ' ')){
                 foreach (Lexeme lex, lexemes) {
-                    if(lex.value == lexeme){
-                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
+                    if(lex.code == 2 || lex.code == 10) {
+                        lexemes.push_back({3, "идентификатор", lexeme, start, i});
                         lexeme.clear();
-                        continue;
+                        flag = 1;
+                        break;
                     }
                 }
-                lexemes.push_back({5, "ключевое слово", lexeme, start, end});
+                if(flag){
+                    flag = 0;
+                    continue;
+                }
+                lexemes.push_back({2, "ключевое слово", lexeme, start, end});
                 lexeme.clear();
             }
         } else {

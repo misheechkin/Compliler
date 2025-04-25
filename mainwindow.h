@@ -57,6 +57,8 @@ private slots:
 
     void on_toolbarStart_triggered();
 
+    void on_action_13_triggered();
+
 private:
     Ui::MainWindow *ui;
     File file;

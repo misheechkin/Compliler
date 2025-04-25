@@ -13,6 +13,17 @@ MainWindow::MainWindow(QWidget *parent)
     highlighter = std::make_unique<CppHighlighter>(ui->plainTextEdit->document());
     connect(ui->plainTextEdit,&QPlainTextEdit::textChanged,this,&MainWindow::documentModified);
     is_modified = false;
+    ui->menuCreateFile->setIcon(QIcon(":/icons/icons/file-document-multiple-outline.svg"));
+    ui->menuOpenFile->setIcon(QIcon(":/icons/icons/folder-open-outline.svg"));
+    ui->menuSaveFile->setIcon(QIcon(":/icons/icons/content-save.svg"));
+    ui->menuCancel->setIcon(QIcon(":/icons/icons/arrow-u-left-bottom.svg"));
+    ui->menuRepeat->setIcon(QIcon(":/icons/icons/arrow-u-right-bottom.svg"));
+    ui->menuCopy->setIcon(QIcon(":/icons/icons/content-copy.svg"));
+    ui->menuCut->setIcon(QIcon(":/icons/icons/content-cut.svg"));
+    ui->menuInsert->setIcon(QIcon(":/icons/icons/content-paste.svg"));
+    ui->toolbarStart->setIcon(QIcon(":/icons/icons/play.svg"));
+    ui->action_21->setIcon(QIcon(":/icons/icons/help.svg"));
+    ui->action_22->setIcon(QIcon(":/icons/icons/information.svg"));
 }
 
 MainWindow::~MainWindow()
@@ -167,5 +178,11 @@ void MainWindow::on_toolbarStart_triggered()
     foreach (QString err, erros) {
         ui->textBrowser->append(err);
     }
+}
+
+
+void MainWindow::on_action_13_triggered()
+{
+
 }
 

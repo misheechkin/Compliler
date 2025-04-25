@@ -40,7 +40,7 @@ public:
 private:
     StateID state;
     static bool isletter(unsigned char c);
-    int netrazilation(QVector<Lexeme> &lexemes,int j, int code, int nextcode, QVector<QString> &errors);
+    int netrazilation(QVector<Lexeme> &lexemes,int &j, int code, int nextcode, QVector<QString> &errors);
 };
 
 #endif // ANALYZER_H#ifndef ANALYZER_H

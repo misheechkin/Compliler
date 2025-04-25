@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>icons/play.svg</file>
+        <file>icons/information.svg</file>
+        <file>icons/help.svg</file>
+        <file>icons/folder-open-outline.svg</file>
+        <file>icons/file-document-multiple-outline.svg</file>
+        <file>icons/content-save.svg</file>
+        <file>icons/content-paste.svg</file>
+        <file>icons/content-cut.svg</file>
+        <file>icons/content-copy.svg</file>
+        <file>icons/arrow-u-right-bottom.svg</file>
+        <file>icons/arrow-u-left-top.svg</file>
+        <file>icons/arrow-u-left-bottom.svg</file>
+    </qresource>
+</RCC>
