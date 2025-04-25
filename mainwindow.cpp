@@ -2,7 +2,7 @@
 #include <QFileDialog>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "analyzer.h"
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -159,13 +159,13 @@ void MainWindow::documentModified()
 void MainWindow::on_toolbarStart_triggered()
 {
     ui->textBrowser->clear();
-    QPlainTextEdit* inputTextEdit =  ui->plainTextEdit;
+    QPlainTextEdit* inputTextEdit = ui->plainTextEdit;
     QString text = inputTextEdit->toPlainText();
-    QVector <Analyzer::Lexeme> lexemes = Analyzer::analyze(text);
-    Analyzer* analyzer = new Analyzer();
-    QVector <QString> erros = analyzer->syntax(lexemes);
-    foreach (QString var, erros) {
-            ui->textBrowser->append(var);
+    QVector<Analyzer::Lexeme> lexemes = Analyzer::analyze(text);
+    Analyzer *analyzer = new Analyzer;
+    QVector<QString> erros = analyzer->syntax(lexemes);
+    foreach (QString err, erros) {
+        ui->textBrowser->append(err);
     }
 }
 

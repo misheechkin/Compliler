@@ -32,7 +32,7 @@ public:
         long unsigned endPos;
 
     };
-    QVector<QString> syntax(QVector<Lexeme>& lexemes);
+    QVector<QString> syntax(QVector<Lexeme> &lexemes);
     static QVector<Lexeme> analyze(const QString& text);
     Analyzer() : state(START)
     {}
@@ -40,6 +40,9 @@ public:
 private:
     StateID state;
     static bool isletter(unsigned char c);
+    int netrazilation(QVector<Lexeme> &lexemes,int j, int code, int nextcode, QVector<QString> &errors);
 };
 
-#endif // ANALYZER_H
+#endif // ANALYZER_H#ifndef ANALYZER_H
+
+

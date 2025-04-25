@@ -5,7 +5,7 @@
 #include <QMainWindow>
 #include "file.h"
 #include "cpphighlighter.h"
-
+#include "analyzer.h"
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;

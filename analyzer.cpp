@@ -5,12 +5,22 @@ bool Analyzer::isletter(unsigned char c) {
     return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 }
 
+int Analyzer::netrazilation(QVector<Lexeme> &lexemes,int j, int code, int nextcode, QVector<QString> &errors){
+    while(j < lexemes.size()){
+        if(lexemes[j].code == 6 && code != 6) {
+            errors.push_back("Неверные символы " + lexemes[j].value);
+        } else {
+            return j;
+        }
+        j++;
+    }
+    return 0;
+}
+
+
 QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
     QVector<QString> errors;
     int len = lexemes.size();
-    if(len > 8) {
-
-    }
     int j = 0;
     for(int i = 0; i < 9; i++) {
         if(j >= len) {
@@ -19,30 +29,29 @@ QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
         switch(state) {
         case START:
             if(lexemes[j].code != 1) {
-                if(lexemes[j].code == 6) {
-                    for(j++; j < len; j++) {
-                        if(lexemes[j].code != 6)
-                            break;
-                    }
-                    errors.push_back("Ожидалось ключевое слово map");
-                } else {
-                    errors.push_back("Отсутвует ключевое слово map");
+                int size_errors = errors.size();
+                j = netrazilation(lexemes, j, 1, 7, errors);
+                if(lexemes[j].code == 1) {
+                    j++;
+                }
+                if(errors.size() == size_errors) {
+                    errors.push_back("Пропущенно map");
                 }
             } else {
                 j++;
-                if(lexemes[j].code == 6) {
-                    errors.push_back("Неожиданные символы '" + lexemes[j].value + "' Ожидалось ключевое слово map");
-                    j++;
-                }
             }
             state = KEYWORD;
             break;
         case KEYWORD:
             if(lexemes[j].code != 7) {
-                if(lexemes[j].code == 6) {
+                int size_errors = errors.size();
+                j = netrazilation(lexemes, j, 7, 3, errors);
+                if(lexemes[j].code == 7) {
                     j++;
                 }
-                errors.push_back("Ошибка нет оператора '<' ");
+                if(errors.size() == size_errors) {
+                    errors.push_back("Пропущенно <");
+                }
             } else {
                 j++;
             }
@@ -50,32 +59,30 @@ QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
             break;
         case OPEN_BRACKET:
             if(lexemes[j].code < 2 || lexemes[j].code > 5) {
-                QString type;
-                if(lexemes[j].code == 6) {
-                    for(; j < len; j++) {
-                        if(lexemes[j].code != 6)
-                            break;
-                         type += lexemes[j].value;
-                    }
-                    errors.push_back("Ожидалось ключевое слово типа данных " + type);
-                } else {
-                    errors.push_back("Отсутвует ключевом слово 'типа данных'");
+                int size_errors = errors.size();
+                j = netrazilation(lexemes, j, 2, 10, errors);
+                if(lexemes[j].code == 2 || lexemes[j].code == 3 || lexemes[j].code == 4
+                    || lexemes[j].code == 5 ) {
+                    j++;
+                }
+                if(errors.size() == size_errors) {
+                    errors.push_back("Пропущен тип данных");
                 }
             } else {
                 j++;
-                if(lexemes[j].code == 6) {
-                    errors.push_back("Неожиданные символы '" + lexemes[j].value + "' Ожидалось ключевое слово " + lexemes[j - 1].value);
-                    j++;
-                }
             }
             state = KEY_TYPE;
             break;
         case KEY_TYPE:
             if(lexemes[j].code != 10) {
-                if(lexemes[j].code == 6) {
+                int size_errors = errors.size();
+                j = netrazilation(lexemes, j, 10, 2, errors);
+                if(lexemes[j].code == 10) {
                     j++;
                 }
-                errors.push_back("Нет ,");
+                if(errors.size() == size_errors) {
+                    errors.push_back("Пропущена ,");
+                }
             } else {
                 j++;
             }
@@ -83,32 +90,30 @@ QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
             break;
         case COMMA:
             if(lexemes[j].code < 2 || lexemes[j].code > 5) {
-                QString type;
-                if(lexemes[j].code == 6) {
-                    for(; j < len; j++) {
-                        if(lexemes[j].code != 6)
-                            break;
-                        type += lexemes[j].value;
-                    }
-                    errors.push_back("Ожидалось ключевое слово типа данных " + type);
-                } else {
-                    errors.push_back("Ожидалось ключевое слово типа данных");
+                int size_errors = errors.size();
+                j = netrazilation(lexemes, j, 2, 8, errors);
+                if(lexemes[j].code == 2 || lexemes[j].code == 3 || lexemes[j].code == 4
+                    || lexemes[j].code == 5 ) {
+                    j++;
+                }
+                if(errors.size() == size_errors) {
+                    errors.push_back("Пропущен тип данных");
                 }
             } else {
                 j++;
-                if(lexemes[j].code == 6) {
-                    errors.push_back("Неожиданные символы '" + lexemes[j].value + "' Ожидалось ключевое слово " + lexemes[j - 1].value);
-                    j++;
-                }
             }
             state = VALUE_TYPE;
             break;
         case VALUE_TYPE:
             if(lexemes[j].code != 8) {
-                if(lexemes[j].code == 6) {
+                int size_errors = errors.size();
+                j = netrazilation(lexemes, j, 8, 6, errors);
+                if(lexemes[j].code == 8) {
                     j++;
                 }
-                errors.push_back("Ошибка нет оператора '>' ");
+                if(errors.size() == size_errors) {
+                    errors.push_back("Пропущена >");
+                }
             } else {
                 j++;
             }
@@ -116,7 +121,7 @@ QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
             break;
         case CLOSE_BRACKET:
             if(lexemes[j].code != 6) {
-                errors.push_back("Ошибка нет индефикатора");
+
             } else {
                 j++;
             }
@@ -124,10 +129,7 @@ QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
             break;
         case VAR_NAME:
             if(lexemes[j].code != 9) {
-                if(lexemes[j].code == 6) {
-                    j++;
-                }
-                errors.push_back("Ошибка нет оператора конца");
+
             } else {
                 j++;
             }
@@ -147,34 +149,73 @@ QVector<Analyzer::Lexeme> Analyzer::analyze(const QString& text) {
     QString lexeme, lexeme_error;
     uint start = 0, end = 0;
     uint i;
+    unsigned char h;
     for (i = 0; i < text.length(); i++) {
         unsigned char c = static_cast<unsigned char>(text[i].toLatin1());
         end = i + 1;
+        if(end < text.length())
+            h = static_cast<unsigned char>(text[end].toLatin1());
         if(c <= 127 && (isletter(c) || isdigit(c))) {
             lexeme += text[i];
             start = (end - lexeme.length()) <= 0 ? 1 : end - lexeme.length() + 1;
-            if("map" == lexeme){
+            if("map" == lexeme && (h == '<' || h == ' ')){
+                foreach (Lexeme lex, lexemes) {
+                    if(lex.value == lexeme){
+                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
+                        lexeme.clear();
+                        continue;
+                    }
+                }
                 lexemes.push_back({1, "ключевое слово", lexeme, start, end});
                 lexeme.clear();
             }
-            else if("int" == lexeme){
+            else if("int" == lexeme && (h == '>' || h == ',' || h == ' ')) {
+                foreach (Lexeme lex, lexemes) {
+                    if(lex.value == lexeme){
+                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
+                        lexeme.clear();
+                        continue;
+                    }
+                }
                 lexemes.push_back({2, "ключевое слово", lexeme, start, end});
                 lexeme.clear();
             }
-            else if("string" == lexeme){
+            else if("string" == lexeme && (h == '>' || h == ',' || h == ' ')){
+                foreach (Lexeme lex, lexemes) {
+                    if(lex.value == lexeme){
+                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
+                        lexeme.clear();
+                        continue;
+                    }
+                }
                 lexemes.push_back({3, "ключевое слово", lexeme, start, end});
                 lexeme.clear();
             }
-            else if("float" == lexeme){
+            else if("float" == lexeme && (h == '>' || h == ',' ||  h == ' ')){
+                foreach (Lexeme lex, lexemes) {
+                    if(lex.value == lexeme){
+                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
+                        lexeme.clear();
+                        continue;
+                    }
+                }
                 lexemes.push_back({4, "ключевое слово", lexeme, start, end});
                 lexeme.clear();
             }
-            else if("double" == lexeme){
+            else if("double" == lexeme && (h == '>' || h == ',' || h == ' ')){
+                foreach (Lexeme lex, lexemes) {
+                    if(lex.value == lexeme){
+                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
+                        lexeme.clear();
+                        continue;
+                    }
+                }
                 lexemes.push_back({5, "ключевое слово", lexeme, start, end});
                 lexeme.clear();
             }
         } else {
-            if(!lexeme.isEmpty()) {
+            if(!lexeme.isEmpty() && (text[i] == '<' || text[i] == '>' ||  text[i] == ';' ||  text[i] == ',' ||
+                                      text[i] == ' ' ||  text[i] == '\n' ||  text[i] == '\t')) {
                 start = i - lexeme.length() <= 0 ? 1 : end - lexeme.length();
                 lexemes.push_back({6, "идентификатор", lexeme, start, i});
                 lexeme.clear();
@@ -207,14 +248,7 @@ QVector<Analyzer::Lexeme> Analyzer::analyze(const QString& text) {
                 lexeme.clear();
                 break;
             default:
-                lexeme_error += lexeme;
-                lexeme.clear();
-                if((i + 1) < text.length() && text[i + 1].toLatin1() == 0){
-                    break;
-                }
-                start = (end  - lexeme_error.length()) <= 0 ? 1 : end - lexeme_error.length() + 1;
-                //lexemes.push_back({11, "недопустимый символы", lexeme_error, start, end});
-                lexeme_error.clear();
+
                 break;
             }
         }
@@ -226,4 +260,3 @@ QVector<Analyzer::Lexeme> Analyzer::analyze(const QString& text) {
     }
     return lexemes;
 }
-
