@@ -13,4 +13,5 @@
         <file>icons/arrow-u-left-top.svg</file>
         <file>icons/arrow-u-left-bottom.svg</file>
     </qresource>
+    <qresource prefix="/pdf"/>
 </RCC>
