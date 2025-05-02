@@ -62,5 +62,6 @@ private:
     File file;
     bool is_modified;
     std::unique_ptr<CppHighlighter> highlighter;
+    Analyzer analyzer;
 };
 #endif // MAINWINDOW_H

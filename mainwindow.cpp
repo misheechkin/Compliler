@@ -158,14 +158,17 @@ void MainWindow::documentModified()
 
 void MainWindow::on_toolbarStart_triggered()
 {
+    QString input = ui->plainTextEdit->toPlainText().replace(" ", "");
     ui->textBrowser->clear();
-    QPlainTextEdit* inputTextEdit = ui->plainTextEdit;
-    QString text = inputTextEdit->toPlainText();
-    QVector<Analyzer::Lexeme> lexemes = Analyzer::analyze(text);
-    Analyzer *analyzer = new Analyzer;
-    QVector<QString> erros = analyzer->syntax(lexemes);
-    foreach (QString err, erros) {
-        ui->textBrowser->append(err);
+
+    if (analyzer.analyze(input)) {
+        ui->textBrowser->setText(
+            "ПОЛИЗ: " + analyzer.getPoliz().join(" ") +
+            "\nРезультат: " + QString::number(analyzer.getResult())
+            );
+    } else {
+        ui->textBrowser->setText(analyzer.getErrors().join("\n"));
     }
+
 }
 

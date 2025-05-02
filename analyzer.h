@@ -1,48 +1,42 @@
+// analyzer.h
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
-#include <QString>
+#include <QObject>
 #include <QVector>
-#include <QString>
-#include <QMap>
-#include <QRegularExpression>
+#include <QStack>
 
-enum StateID {
-    START,
-    KEYWORD,
-    OPEN_BRACKET,
-    KEY_TYPE,
-    COMMA,
-    VALUE_TYPE,
-    CLOSE_BRACKET,
-    VAR_NAME,
-    END,
-};
-
-
-class Analyzer
-{
+class Analyzer : public QObject {
+    Q_OBJECT
 public:
-
-    struct Lexeme {
-        int code;
-        QString type;
+    struct Token {
+        enum Type { Number, Plus, Minus, Multiply, Divide, LParen, RParen, Invalid };
+        Type type;
         QString value;
-        long unsigned startPos;
-        long unsigned endPos;
-
+        int position;
     };
-    QVector<QString> syntax(QVector<Lexeme> &lexemes);
-    static QVector<Lexeme> analyze(const QString& text);
-    Analyzer() : state(START)
-    {}
+
+    explicit Analyzer(QObject *parent = nullptr);
+
+    bool analyze(const QString& input);
+    const QStringList& getPoliz() const { return poliz; }
+    double getResult() const { return result; }
+    const QStringList& getErrors() const { return errors; }
 
 private:
-    StateID state;
-    static bool isletter(unsigned char c);
-    int netrazilation(QVector<Lexeme> &lexemes,int j, int code, int nextcode, QVector<QString> &errors);
+    QVector<Token> tokens;
+    QStringList poliz;
+    QStringList errors;
+    double result;
+    int currentPos;
+
+    void tokenize(const QString& input);
+    bool parseExpression();
+    bool parseA();
+    bool parseT();
+    bool parseB();
+    bool parseO();
+    void evaluatePOLIZ();
 };
 
-#endif // ANALYZER_H#ifndef ANALYZER_H
-
-
+#endif // ANALYZER_H

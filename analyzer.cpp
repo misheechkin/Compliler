@@ -1,262 +1,155 @@
+// analyzer.cpp
 #include "analyzer.h"
+#include <QRegularExpression>
+
+Analyzer::Analyzer(QObject *parent) : QObject(parent), currentPos(0), result(0) {}
+
+bool Analyzer::analyze(const QString& input) {
+    tokens.clear();
+    poliz.clear();
+    errors.clear();
+    currentPos = 0;
+    result = 0;
+
+    tokenize(input);
+    if (!errors.isEmpty()) return false;
 
 
-bool Analyzer::isletter(unsigned char c) {
-    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+    if (!parseExpression() || currentPos != tokens.size()) {
+        if (errors.isEmpty()) errors << "Синтаксическая ошибка";
+        return false;
+    }
+
+
+    evaluatePOLIZ();
+    return true;
 }
 
-int Analyzer::netrazilation(QVector<Lexeme> &lexemes,int j, int code, int nextcode, QVector<QString> &errors){
-    while(j < lexemes.size()){
-        if(lexemes[j].code == 6 && code != 6) {
-            errors.push_back("Неверные символы " + lexemes[j].value);
+void Analyzer::tokenize(const QString& input) {
+    int pos = 0;
+    while (pos < input.length()) {
+        QChar c = input[pos];
+        if (c.isDigit() || c == '.') {
+            QString num;
+            while (pos < input.length() && (input[pos].isDigit() || input[pos] == '.')) {
+                num += input[pos];
+                pos++;
+            }
+            tokens.append({Token::Number, num, pos});
+            continue;
+        }
+
+        Token::Type type = Token::Invalid;
+        switch (c.toLatin1()) {
+        case '+': type = Token::Plus; break;
+        case '-': type = Token::Minus; break;
+        case '*': type = Token::Multiply; break;
+        case '/': type = Token::Divide; break;
+        case '(': type = Token::LParen; break;
+        case ')': type = Token::RParen; break;
+        }
+
+        if (type != Token::Invalid) {
+            tokens.append({type, QString(c), pos});
+            pos++;
         } else {
-            return j;
+            errors << QString("Неизвестный символ '%1' на позиции %2").arg(c).arg(pos);
+            pos++;
         }
-        j++;
     }
-    return 0;
 }
 
 
-QVector<QString> Analyzer::syntax(QVector<Lexeme> &lexemes) {
-    QVector<QString> errors;
-    int len = lexemes.size();
-    int j = 0;
-    for(int i = 0; i < 9; i++) {
-        if(j >= len) {
-            j = len - 1;
-        }
-        switch(state) {
-        case START:
-            if(lexemes[j].code != 1) {
-                int size_errors = errors.size();
-                j = netrazilation(lexemes, j, 1, 7, errors);
-                if(lexemes[j].code == 1) {
-                    j++;
-                }
-                if(errors.size() == size_errors) {
-                    errors.push_back("Пропущенно map");
-                }
-            } else {
-                j++;
-            }
-            state = KEYWORD;
-            break;
-        case KEYWORD:
-            if(lexemes[j].code != 7) {
-                int size_errors = errors.size();
-                j = netrazilation(lexemes, j, 7, 3, errors);
-                if(lexemes[j].code == 7) {
-                    j++;
-                }
-                if(errors.size() == size_errors) {
-                    errors.push_back("Пропущенно <");
-                }
-            } else {
-                j++;
-            }
-            state = OPEN_BRACKET;
-            break;
-        case OPEN_BRACKET:
-            if(lexemes[j].code < 2 || lexemes[j].code > 5) {
-                int size_errors = errors.size();
-                j = netrazilation(lexemes, j, 2, 10, errors);
-                if(lexemes[j].code == 2 || lexemes[j].code == 3 || lexemes[j].code == 4
-                    || lexemes[j].code == 5 ) {
-                    j++;
-                }
-                if(errors.size() == size_errors) {
-                    errors.push_back("Пропущен тип данных");
-                }
-            } else {
-                j++;
-            }
-            state = KEY_TYPE;
-            break;
-        case KEY_TYPE:
-            if(lexemes[j].code != 10) {
-                int size_errors = errors.size();
-                j = netrazilation(lexemes, j, 10, 2, errors);
-                if(lexemes[j].code == 10) {
-                    j++;
-                }
-                if(errors.size() == size_errors) {
-                    errors.push_back("Пропущена ,");
-                }
-            } else {
-                j++;
-            }
-            state = COMMA;
-            break;
-        case COMMA:
-            if(lexemes[j].code < 2 || lexemes[j].code > 5) {
-                int size_errors = errors.size();
-                j = netrazilation(lexemes, j, 2, 8, errors);
-                if(lexemes[j].code == 2 || lexemes[j].code == 3 || lexemes[j].code == 4
-                    || lexemes[j].code == 5 ) {
-                    j++;
-                }
-                if(errors.size() == size_errors) {
-                    errors.push_back("Пропущен тип данных");
-                }
-            } else {
-                j++;
-            }
-            state = VALUE_TYPE;
-            break;
-        case VALUE_TYPE:
-            if(lexemes[j].code != 8) {
-                int size_errors = errors.size();
-                j = netrazilation(lexemes, j, 8, 6, errors);
-                if(lexemes[j].code == 8) {
-                    j++;
-                }
-                if(errors.size() == size_errors) {
-                    errors.push_back("Пропущена >");
-                }
-            } else {
-                j++;
-            }
-            state = CLOSE_BRACKET;
-            break;
-        case CLOSE_BRACKET:
-            if(lexemes[j].code != 6) {
+bool Analyzer::parseExpression() {
+    return parseT() && parseA();
+}
+bool Analyzer::parseA() {
+    if (currentPos >= tokens.size()) return true;
 
-            } else {
-                j++;
-            }
-            state = VAR_NAME;
-            break;
-        case VAR_NAME:
-            if(lexemes[j].code != 9) {
-
-            } else {
-                j++;
-            }
-            state = END;
-            break;
-        case END:
-            state = START;
-            break;
+    Token t = tokens[currentPos];
+    if (t.type == Token::Plus || t.type == Token::Minus) {
+        currentPos++;
+        if (!parseT()) {
+            errors.append("Ожидалось выражение после оператора на позиции " + QString::number(t.position));
+            return false;
         }
+        poliz.append(t.value);
+        return parseA();
     }
-    return errors;
+    return true;
+}
+bool Analyzer::parseT() {
+    return parseO() && parseB();
+}
+bool Analyzer::parseB() {
+    if (currentPos >= tokens.size()) return true;
+
+    Token t = tokens[currentPos];
+    if (t.type == Token::Multiply || t.type == Token::Divide) {
+        currentPos++;
+        if (!parseO()) {
+            errors.append("Ожидалось выражение после оператора на позиции " + QString::number(t.position));
+            return false;
+        }
+        poliz.append(t.value);
+        return parseB();
+    }
+    return true;
 }
 
+bool Analyzer::parseO() {
+    if (currentPos >= tokens.size()) {
+        errors << "Ожидалось число или скобка";
+        return false;
+    }
 
-QVector<Analyzer::Lexeme> Analyzer::analyze(const QString& text) {
-    QVector<Lexeme> lexemes;
-    QString lexeme, lexeme_error;
-    uint start = 0, end = 0;
-    uint i;
-    unsigned char h;
-    for (i = 0; i < text.length(); i++) {
-        unsigned char c = static_cast<unsigned char>(text[i].toLatin1());
-        end = i + 1;
-        if(end < text.length())
-            h = static_cast<unsigned char>(text[end].toLatin1());
-        if(c <= 127 && (isletter(c) || isdigit(c))) {
-            lexeme += text[i];
-            start = (end - lexeme.length()) <= 0 ? 1 : end - lexeme.length() + 1;
-            if("map" == lexeme && (h == '<' || h == ' ')){
-                foreach (Lexeme lex, lexemes) {
-                    if(lex.value == lexeme){
-                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
-                        lexeme.clear();
-                        continue;
-                    }
-                }
-                lexemes.push_back({1, "ключевое слово", lexeme, start, end});
-                lexeme.clear();
+    Token t = tokens[currentPos];
+    if (t.type == Token::Number) {
+        poliz.append(t.value);
+        currentPos++;
+
+        if (currentPos < tokens.size()) {
+            Token next = tokens[currentPos];
+            if (next.type == Token::Number || next.type == Token::LParen) {
+                errors << QString("Пропущен оператор между '%1' и '%2' на позиции %3")
+                              .arg(t.value, next.value).arg(next.position);
+                return false;
             }
-            else if("int" == lexeme && (h == '>' || h == ',' || h == ' ')) {
-                foreach (Lexeme lex, lexemes) {
-                    if(lex.value == lexeme){
-                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
-                        lexeme.clear();
-                        continue;
-                    }
-                }
-                lexemes.push_back({2, "ключевое слово", lexeme, start, end});
-                lexeme.clear();
+        }
+        return true;
+    } else if (t.type == Token::LParen) {
+        currentPos++;
+        if (!parseExpression()) return false;
+        if (currentPos >= tokens.size() || tokens[currentPos].type != Token::RParen) {
+            errors << QString("Ожидалась закрывающая скобка на позиции %1").arg(t.position);
+            return false;
+        }
+        currentPos++;
+        return true;
+    }
+    errors << QString("Ожидалось число или скобка на позиции %1").arg(t.position);
+    return false;
+}
+
+void Analyzer::evaluatePOLIZ() {
+    QStack<double> stack;
+    for (const QString& token : poliz) {
+        if (token == "+" || token == "-" || token == "*" || token == "/") {
+            if (stack.size() < 2) {
+                result = 0;
+                return;
             }
-            else if("string" == lexeme && (h == '>' || h == ',' || h == ' ')){
-                foreach (Lexeme lex, lexemes) {
-                    if(lex.value == lexeme){
-                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
-                        lexeme.clear();
-                        continue;
-                    }
-                }
-                lexemes.push_back({3, "ключевое слово", lexeme, start, end});
-                lexeme.clear();
-            }
-            else if("float" == lexeme && (h == '>' || h == ',' ||  h == ' ')){
-                foreach (Lexeme lex, lexemes) {
-                    if(lex.value == lexeme){
-                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
-                        lexeme.clear();
-                        continue;
-                    }
-                }
-                lexemes.push_back({4, "ключевое слово", lexeme, start, end});
-                lexeme.clear();
-            }
-            else if("double" == lexeme && (h == '>' || h == ',' || h == ' ')){
-                foreach (Lexeme lex, lexemes) {
-                    if(lex.value == lexeme){
-                        lexemes.push_back({6, "идентификатор", lexeme, start, i});
-                        lexeme.clear();
-                        continue;
-                    }
-                }
-                lexemes.push_back({5, "ключевое слово", lexeme, start, end});
-                lexeme.clear();
-            }
+            double b = stack.pop();
+            double a = stack.pop();
+            if (token == "+") stack.push(a + b);
+            else if (token == "-") stack.push(a - b);
+            else if (token == "*") stack.push(a * b);
+            else if (token == "/") stack.push(a / b);
         } else {
-            if(!lexeme.isEmpty() && (text[i] == '<' || text[i] == '>' ||  text[i] == ';' ||  text[i] == ',' ||
-                                      text[i] == ' ' ||  text[i] == '\n' ||  text[i] == '\t')) {
-                start = i - lexeme.length() <= 0 ? 1 : end - lexeme.length();
-                lexemes.push_back({6, "идентификатор", lexeme, start, i});
-                lexeme.clear();
-            }
-            lexeme += text[i];
-            switch (c) {
-            case '<':
-                lexemes.push_back({7, "оператор <", lexeme, end, end});
-                lexeme.clear();
-                break;
-            case '>':
-                lexemes.push_back({8, "оператор >", lexeme, end, end});
-                lexeme.clear();
-                break;
-            case ';':
-                lexemes.push_back({9, "оператор конца", lexeme, end, end});
-                lexeme.clear();
-                break;
-            case ',':
-                lexemes.push_back({10, "оператор ,", lexeme, end, end});
-                lexeme.clear();
-                break;
-            case ' ':
-                lexeme.clear();
-                break;
-            case '\n':
-                lexeme.clear();
-                break;
-            case '\t':
-                lexeme.clear();
-                break;
-            default:
-
-                break;
-            }
+            bool ok;
+            double num = token.toDouble(&ok);
+            if (ok) stack.push(num);
         }
     }
-    if(!lexeme.isEmpty()) {
-        start = i - lexeme.length() <= 0 ? 1 : end - lexeme.length();
-        lexemes.push_back({6, "идентификатор", lexeme, start, i});
-        lexeme.clear();
-    }
-    return lexemes;
+    result = stack.isEmpty() ? 0 : stack.top();
 }
