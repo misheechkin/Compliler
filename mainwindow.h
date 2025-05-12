@@ -5,7 +5,8 @@
 #include <QMainWindow>
 #include "file.h"
 #include "cpphighlighter.h"
-#include "analyzer.h"
+#include "patternmatcher.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -62,6 +63,6 @@ private:
     File file;
     bool is_modified;
     std::unique_ptr<CppHighlighter> highlighter;
-    Analyzer analyzer;
+    TextPatternMatcher matcher;
 };
 #endif // MAINWINDOW_H

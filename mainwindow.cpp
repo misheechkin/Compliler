@@ -4,6 +4,7 @@
 #include "ui_mainwindow.h"
 
 
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -158,17 +159,8 @@ void MainWindow::documentModified()
 
 void MainWindow::on_toolbarStart_triggered()
 {
-    QString input = ui->plainTextEdit->toPlainText().replace(" ", "");
-    ui->textBrowser->clear();
-
-    if (analyzer.analyze(input)) {
-        ui->textBrowser->setText(
-            "ПОЛИЗ: " + analyzer.getPoliz().join(" ") +
-            "\nРезультат: " + QString::number(analyzer.getResult())
-            );
-    } else {
-        ui->textBrowser->setText(analyzer.getErrors().join("\n"));
-    }
-
+    QString text = ui->plainTextEdit->toPlainText();
+    auto results = matcher.processText(text);
+    ui->textBrowser->setHtml(matcher.formatResults(results));
 }
 
