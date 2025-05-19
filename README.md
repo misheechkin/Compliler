@@ -265,4 +265,62 @@ CFG позволяет точно анализировать потоки исп
 Оптимизации становятся более надёжными, платформо-независимыми и масштабируемыми.
 
 
+### Дополнительное задане:
+
+Задание: Используйте std::map<std::string, int> с инициализацией 2–3
+пар. Рассмотрите в AST и IR, как происходит вызов конструктора и вставка
+элементов через insert или {}.
+
+![Снимок экрана от 2025-05-19 15-16-11](https://github.com/user-attachments/assets/1bc9978a-f4ef-474b-9876-fc8d44f9d86d)
+
+### AST 
+![image](https://github.com/user-attachments/assets/35f7c1ba-4175-4a34-bfc7-2148c70bee46)
+
+В AST виден вызов конструктора std::map, принимающего std::initializer_list<std::pair<const std::string, int>>.
+Узел CXXConstructExpr соответствует конструктору с параметром initializer_list.
+Каждая пара {"key", value} преобразуется в элемент списка инициализации.
+
+### IR (LLVM)
+
+![image](https://github.com/user-attachments/assets/cf911117-5457-484a-a69c-c4e1880c1def)
+
+Генерируется вызов конструктора std::map с передачей initializer_list.
+Компилятор создает временный массив для пар ключ-значение и передает его в конструктор.
+
+### Инициализация через insert
+
+![image](https://github.com/user-attachments/assets/55416204-b3eb-4363-89ae-8e2827ae33e5)
+
+### AST 
+
+![image](https://github.com/user-attachments/assets/9b7dd311-9def-4dab-b136-9724652ad2e1)
+
+Дефолтный конструктор std::map (без параметров)
+Три узла CXXMemberCallExpr для вызовов insert
+Каждый insert принимает временный объект std::pair
+
+### IR (LLVM)
+
+![image](https://github.com/user-attachments/assets/63de6e0b-18ac-4f26-9597-47199cc93284)
+
+Для каждого insert генерируется отдельный вызов.
+
+### Итог
+
+
+LLVM/AST отличие
+
+{} → CXXConstructExpr с InitListExpr, вызывается конструктор с initializer_list.
+
+insert() → CXXMemberCallExpr + CallExpr на insert() + создание пары вручную 
+
+Через {}:
+В AST используется конструктор с initializer_list.
+В IR элементы передаются списком, что может быть эффективнее.
+
+Через insert:
+В AST — дефолтный конструктор и отдельные вызовы insert.
+В IR — несколько вызовов с накладными расходами.
+
+
 
